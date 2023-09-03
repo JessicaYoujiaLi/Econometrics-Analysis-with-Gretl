@@ -1,0 +1,116 @@
+open ProjectData.csv --quiet
+
+## First Stage 
+
+#Life expectancy
+ols LifeExpectancy const Gini  
+ols LifeExpectancy const Gini Povertyrate Educationscores
+modtest --squares
+modtest --white
+omit Gini Povertyrate Educationscores --test-only
+
+#Infant mortality
+ols InfantMortality const Gini 
+ols InfantMortality const Gini Povertyrate Educationscores
+modtest --squares
+modtest --white
+omit Gini Povertyrate Educationscores --test-only
+ 
+#MentalIllness
+ols MentalIllness const Gini 
+ols MentalIllness const Gini Educationscores
+modtest --squares
+modtest --white
+
+
+#teenage birthrate 
+ols Teenagebirthrate const Gini 
+ols Teenagebirthrate const Povertyrate Educationscores
+modtest --squares
+square Povertyrate
+ols Teenagebirthrate const Povertyrate sq_Povertyrate Educationscores
+modtest --white 
+omit Povertyrate sq_Povertyrate Educationscores --test-only
+
+#Homicides 
+ols Homicides const Gini 
+ols Homicides const Gini Povertyrate Educationscores
+modtest --squares
+omit Gini Povertyrate Educationscores --test-only
+modtest --white
+
+#imprisonment
+ols imprisonment const Gini 
+ols imprisonment const Gini Educationscores
+modtest --squares
+square Gini
+ols imprisonment const Gini sq_Gini Educationscores
+modtest --white
+omit Gini sq_Gini Educationscores --test-only
+ols imprisonment const Gini sq_Gini Educationscores --robust 
+
+#Obesity
+ols Obesity const Gini 
+ols Obesity const Povertyrate
+
+
+## Second stage
+
+#Life expectancy
+ols LifeExpectancy const Gini Povertyrate InfantMortality MentalIllness Educationscores imprisonment Obesity  
+modtest --squares
+omit Gini Povertyrate InfantMortality MentalIllness Educationscores imprisonment Obesity  --test-only
+coeffsum const Gini Povertyrate MentalIllness Educationscores 
+modtest --white
+
+
+#Infant mortality
+ols InfantMortality const Gini Povertyrate LifeExpectancy Educationscores imprisonment Obesity  
+modtest --squares
+square LifeExpectancy
+ols InfantMortality const Gini Povertyrate LifeExpectancy sq_LifeExpectancy Educationscores imprisonment Obesity 
+omit Gini Povertyrate LifeExpectancy Educationscores imprisonment Obesity sq_LifeExpectancy --test-only
+coeffsum Gini Povertyrate Educationscores imprisonment Obesity
+modtest --white
+
+#MentalIllness
+ols MentalIllness const Gini LifeExpectancy  Educationscores Obesity  
+modtest --squares
+
+#teenage birthrate
+ols Teenagebirthrate const Educationscores Homicides imprisonment 
+modtest --squares 
+omit Povertyrate sq_Povertyrate Educationscores --test-only
+modtest --white
+
+#Homicides
+ols Homicides const Gini Povertyrate Educationscores Teenagebirthrate imprisonment 
+modtest --squares
+omit Gini Povertyrate Educationscores --test-only
+modtest --white
+
+ 
+#imprisonment
+ols imprisonment const Gini LifeExpectancy InfantMortality Educationscores Teenagebirthrate Homicides  
+modtest --squares 
+square Educationscores
+square Teenagebirthrate
+ols imprisonment const Gini sq_Gini LifeExpectancy InfantMortality Educationscores sq_Educationscores Teenagebirthrate Homicides sq_Teenagebirthrate
+omit Gini sq_Gini LifeExpectancy InfantMortality Educationscores sq_Educationscores Teenagebirthrate Homicides sq_Teenagebirthrate --test-only
+coeffsum InfantMortality Homicides
+ols imprisonment const Gini sq_Gini LifeExpectancy Educationscores sq_Educationscores Teenagebirthrate sq_Teenagebirthrate  
+modtest --white
+
+#Obesity
+ols Obesity const Gini LifeExpectancy InfantMortality MentalIllness
+modtest --squares
+ols Obesity const Gini sq_Gini LifeExpectancy InfantMortality MentalIllness
+omit Gini sq_Gini LifeExpectancy InfantMortality MentalIllness --test-only
+coeffsum const InfantMortality MentalIllness
+ols Obesity Gini sq_Gini LifeExpectancy
+modtest --white
+
+
+
+
+
